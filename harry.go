@@ -15,7 +15,8 @@ import (
 	"gopkg.in/fsnotify.v1"
 )
 
-var prereqDebugLine = regexp.MustCompile(`Prerequisite '([^']+)' is (older|newer) than target '([^']+)'.`)
+// some systems say `foo' and some say 'foo'
+var prereqDebugLine = regexp.MustCompile(`Prerequisite .([^']+)' is (older|newer) than target .([^']+)'.`)
 
 var watchFailedColor = color.New(color.FgMagenta, color.Bold)
 var changeColor = color.New(color.FgYellow, color.Bold)
