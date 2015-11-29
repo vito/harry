@@ -110,14 +110,24 @@ func (harry *Harry) remake() {
 }
 
 func (harry *Harry) wait() {
-	defer harry.watcher.Close()
+	errs := harry.watcher.Errors
 
 	for {
 		select {
-		case <-harry.watcher.Events:
-			return
-		case err := <-harry.watcher.Errors:
-			watchFailedColor.Printf("encountered error while watching: %s\n", err)
+		case _, ok := <-harry.watcher.Events:
+			if ok {
+				// closing must be asynchronous to prevent deadlock
+				go harry.watcher.Close()
+			} else {
+				return
+			}
+
+		case err, ok := <-errs:
+			if ok {
+				watchFailedColor.Printf("encountered error while watching: %s\n", err)
+			} else {
+				errs = nil
+			}
 		}
 	}
 }
