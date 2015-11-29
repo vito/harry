@@ -112,12 +112,16 @@ func (harry *Harry) remake() {
 func (harry *Harry) wait() {
 	errs := harry.watcher.Errors
 
+	var closed bool
+
 	for {
 		select {
 		case _, ok := <-harry.watcher.Events:
-			if ok {
+			if ok && !closed {
 				// closing must be asynchronous to prevent deadlock
 				go harry.watcher.Close()
+
+				closed = true
 			} else {
 				return
 			}
