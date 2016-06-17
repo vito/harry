@@ -2,7 +2,7 @@
 
 > Go ahead, make my day.
 
-Automatically runs `make` when its prerequisites change.
+Automatically runs `make` when its prerequisites change (or, become "dirty").
 
 ## Usage
 
