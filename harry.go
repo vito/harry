@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/fatih/color"
-	"gopkg.in/fsnotify.v1"
+	"github.com/rjeczalik/notify"
 )
 
 // some systems say `foo' and some say 'foo'
@@ -27,12 +27,14 @@ var makeFailedColor = color.New(color.FgRed, color.Bold)
 type Harry struct {
 	MakeArgs []string
 
-	watcher *fsnotify.Watcher
+	events chan notify.EventInfo
 }
 
 func newHarry(makeArgs []string) *Harry {
 	return &Harry{
 		MakeArgs: makeArgs,
+
+		events: make(chan notify.EventInfo, 35),
 	}
 }
 
@@ -54,18 +56,6 @@ func (harry *Harry) MakeMyDay() {
 }
 
 func (harry *Harry) watchForRemake() (bool, error) {
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		return false, fmt.Errorf("failed to construct watcher: %s", err)
-	}
-
-	harry.watcher = watcher
-
-	err = watcher.Add("Makefile")
-	if err != nil {
-		return false, fmt.Errorf("failed to watch Makefile for changes: %s", err)
-	}
-
 	detectArgs := []string{"--dry-run", "--debug=v", "--no-builtin-rules"}
 	detect := exec.Command("make", append(detectArgs, harry.MakeArgs...)...)
 
@@ -110,30 +100,8 @@ func (harry *Harry) remake() {
 }
 
 func (harry *Harry) wait() {
-	errs := harry.watcher.Errors
-
-	var closed bool
-
-	for {
-		select {
-		case _, ok := <-harry.watcher.Events:
-			if ok && !closed {
-				// closing must be asynchronous to prevent deadlock
-				go harry.watcher.Close()
-
-				closed = true
-			} else {
-				return
-			}
-
-		case err, ok := <-errs:
-			if ok {
-				watchFailedColor.Printf("encountered error while watching: %s\n", err)
-			} else {
-				errs = nil
-			}
-		}
-	}
+	<-harry.events
+	notify.Stop(harry.events)
 }
 
 func (harry *Harry) watchPrereqs(out *bufio.Reader) (bool, error) {
@@ -177,7 +145,7 @@ func (harry *Harry) watch(watched map[string]bool, path string) error {
 		return nil
 	}
 
-	err := harry.watcher.Add(path)
+	err := notify.Watch(path, harry.events, notify.All)
 	if err != nil {
 		return err
 	}
