@@ -12,17 +12,19 @@ import (
 	"time"
 
 	"github.com/fatih/color"
-	"gopkg.in/fsnotify.v1"
+	"github.com/fsnotify/fsnotify"
 )
 
 // some systems say `foo' and some say 'foo'
 var prereqDebugLine = regexp.MustCompile(`Prerequisite .([^']+)' is (older|newer) than target .([^']+)'.`)
 
-var watchFailedColor = color.New(color.FgMagenta, color.Bold)
-var changeColor = color.New(color.FgYellow, color.Bold)
-var makingColor = color.New(color.FgBlue, color.Bold)
-var makeSucceededColor = color.New(color.FgGreen, color.Bold)
-var makeFailedColor = color.New(color.FgRed, color.Bold)
+var (
+	watchFailedColor   = color.New(color.FgMagenta, color.Bold)
+	changeColor        = color.New(color.FgYellow, color.Bold)
+	makingColor        = color.New(color.FgBlue, color.Bold)
+	makeSucceededColor = color.New(color.FgGreen, color.Bold)
+	makeFailedColor    = color.New(color.FgRed, color.Bold)
+)
 
 type Harry struct {
 	MakeArgs []string
